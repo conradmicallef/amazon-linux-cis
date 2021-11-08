@@ -77,9 +77,9 @@ def enable_aide():
 	
 def enable_wazuh():
     exec_shell([
-		'rpm --import https://packages.wazuh.com/key/GPG-KEY-WAZUH'
-	])
-	File('/etc/yum.repos.d/wazuh.repo').write(get_string_asset('/etc/yum.repos.d/wazuh.repo'))
+        'rpm --import https://packages.wazuh.com/key/GPG-KEY-WAZUH'
+    ])
+    File('/etc/yum.repos.d/wazuh.repo').write(get_string_asset('/etc/yum.repos.d/wazuh.repo'))
     return exec_shell([
 		'WAZUH_MANAGER="10.0.0.2" yum install -y wazuh-agent',
 		'systemctl daemon-reload',
