@@ -578,7 +578,7 @@ def main():
     exec_shell([
         'yum update --security -y'
 	])
-	configure_amazon_ssm()
+    enable_amazon_ssm()
 	
 # 1 Initial Setup
     disable_unused_filesystems()
