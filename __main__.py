@@ -74,6 +74,19 @@ def enable_aide():
         'mv /var/lib/aide/aide.db.new.gz /var/lib/aide/aide.db.gz',
         '(crontab -u root -l 2>/dev/null | grep -v /usr/sbin/aide; echo "{}") | crontab -'.format(cron_job)
     ])
+	
+def enable_wazuh():
+    exec_shell([
+	'rpm --import https://packages.wazuh.com/key/GPG-KEY-WAZUH'
+	])
+	File('/etc/yum.repos.d/wazuh.repo').write(get_string_asset('/etc/yum.repos.d/wazuh.repo'))
+    exec_shell([
+		'WAZUH_MANAGER="10.0.0.2" yum install -y wazuh-agent'
+		'systemctl daemon-reload',
+		'systemctl enable wazuh-agent',
+		'systemctl start wazuh-agent',
+		'sed -i "s/^enabled=1/enabled=0/" /etc/yum.repos.d/wazuh.repo'
+	])
 
 
 def secure_boot_settings():
@@ -222,6 +235,10 @@ def configure_mta():
         'inet_interfaces': 'localhost'
     }).write()
 
+def configure_ssmtp():
+	exec_shell([
+		'yum install -y ssmtp mailx'
+	])
 
 def remove_insecure_clients():
     """2.3 Service Clients"""
@@ -562,7 +579,8 @@ def main():
         set_mount_options()
     ensure_sticky_bit()
     disable_automounting()
-    enable_aide()
+    # enable_aide()
+	enable_wazuh()
     secure_boot_settings()
     apply_process_hardenings()
     configure_warning_banners()
@@ -573,7 +591,8 @@ def main():
     configure_time_synchronization(args.time, chrony=args.chrony)
     remove_x11_packages()
     disable_special_services()
-    configure_mta()
+    #configure_mta()
+	configure_ssmtp()
     remove_insecure_clients()
 
     # 3 Network Configuration
