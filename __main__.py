@@ -77,17 +77,19 @@ def enable_aide():
 	
 def enable_wazuh():
     exec_shell([
-	'rpm --import https://packages.wazuh.com/key/GPG-KEY-WAZUH'
+		'rpm --import https://packages.wazuh.com/key/GPG-KEY-WAZUH'
 	])
 	File('/etc/yum.repos.d/wazuh.repo').write(get_string_asset('/etc/yum.repos.d/wazuh.repo'))
-    exec_shell([
-		'WAZUH_MANAGER="10.0.0.2" yum install -y wazuh-agent'
+    return exec_shell([
+		'WAZUH_MANAGER="10.0.0.2" yum install -y wazuh-agent',
 		'systemctl daemon-reload',
 		'systemctl enable wazuh-agent',
 		'systemctl start wazuh-agent',
 		'sed -i "s/^enabled=1/enabled=0/" /etc/yum.repos.d/wazuh.repo'
 	])
 
+def enable_amazon_ssm():
+    exec_shell(['yum install amazon-ssm-agent -y'])
 
 def secure_boot_settings():
     """1.4 Secure Boot Settings"""
@@ -573,14 +575,19 @@ def main():
         logging.info('[Config] Automatic config backup is disabled')
         set_backup_enabled(False)
 
-    # 1 Initial Setup
+    exec_shell([
+        'yum update --security -y'
+	])
+	configure_amazon_ssm()
+	
+# 1 Initial Setup
     disable_unused_filesystems()
     if not args.disable_mount_options:
         set_mount_options()
     ensure_sticky_bit()
     disable_automounting()
     # enable_aide()
-	enable_wazuh()
+    enable_wazuh()
     secure_boot_settings()
     apply_process_hardenings()
     configure_warning_banners()
@@ -591,8 +598,8 @@ def main():
     configure_time_synchronization(args.time, chrony=args.chrony)
     remove_x11_packages()
     disable_special_services()
-    #configure_mta()
-	configure_ssmtp()
+    configure_mta()
+    #configure_ssmtp()
     remove_insecure_clients()
 
     # 3 Network Configuration
